@@ -15,6 +15,17 @@ type Kind =
   | "period"
   | "policy"
   | "budget";
+const redirectAfterCreate: Record<Kind, string> = {
+  vendor: "/app/vendors",
+  user: "/app/admin/users",
+  department: "/app/admin/departments",
+  "cost-center": "/app/admin/cost-centers",
+  category: "/app/admin/categories",
+  location: "/app/admin/locations",
+  period: "/app/admin/periods",
+  policy: "/app/admin/policies",
+  budget: "/app/finance/budgets",
+};
 const endpoints: Record<Kind, string> = {
   vendor: "/vendors",
   user: "/admin/users",
@@ -121,7 +132,7 @@ export function MasterCreatePage({ kind }: { kind: Kind }) {
       if (kind === "policy")
         payload.directPurchaseEnabled = values.directPurchaseEnabled !== "false";
       await apiPost(endpoints[kind], payload);
-      await navigate({ to: "/app" });
+      await navigate({ to: (redirectAfterCreate[kind] || "/app") as "/app" });
     } catch (e) {
       setError(e instanceof Error ? e.message : "Unable to save");
     } finally {
@@ -133,6 +144,8 @@ export function MasterCreatePage({ kind }: { kind: Kind }) {
       title={`New ${kind.replaceAll("-", " ")}`}
       description="Create an authorized record in the company workspace."
       error={error}
+      backTo={redirectAfterCreate[kind] || "/app"}
+      backLabel="Back to list"
     >
       <form onSubmit={submit}>
         <section className="form-section">

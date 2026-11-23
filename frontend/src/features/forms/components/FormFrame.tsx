@@ -7,11 +7,15 @@ export function FormFrame({
   description,
   error,
   children,
+  backTo = "/app",
+  backLabel = "Back to workspace",
 }: {
   title: string;
   description: string;
   error?: string;
   children: ReactNode;
+  backTo?: string;
+  backLabel?: string;
 }) {
   return (
     <main className="page">
@@ -31,9 +35,9 @@ export function FormFrame({
       <div style={{ marginTop: 16 }}>
         <Link
           className="button"
-          to="/app"
+          to={backTo as "/app"}
         >
-          Back to workspace
+          {backLabel}
         </Link>
       </div>
     </main>

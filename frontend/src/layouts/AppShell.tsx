@@ -36,12 +36,25 @@ export function AppShell({ user, children }: { user: User; children: React.React
     if (to === "/app/my-requests") {
       return current === "/app/my-requests" || current.startsWith("/app/requests");
     }
+    if (to === "/app/receiving/expected") {
+      return current.startsWith("/app/receiving");
+    }
+    if (to === "/app/finance/budgets") {
+      return (
+        current === "/app/finance/budgets" ||
+        current.startsWith("/app/finance/budgets/") ||
+        current.startsWith("/app/admin/budgets") ||
+        current.startsWith("/app/budgets") ||
+        current.startsWith("/app/department/budget")
+      );
+    }
     if (to === "/app/admin/departments") {
       return (
         current === "/app/admin/departments" ||
         (current.startsWith("/app/admin/") &&
           !current.startsWith("/app/admin/users") &&
-          !current.startsWith("/app/admin/audit"))
+          !current.startsWith("/app/admin/audit") &&
+          !current.startsWith("/app/admin/budgets"))
       );
     }
     return current === to || current.startsWith(`${to}/`);
