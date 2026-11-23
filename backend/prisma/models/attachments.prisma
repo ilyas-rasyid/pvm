@@ -1,0 +1,23 @@
+model Attachment {
+  id         String              @id @default(uuid())
+  parentType String
+  parentId   String
+  uploadedBy String
+  createdAt  DateTime            @default(now())
+  versions   AttachmentVersion[]
+  @@index([parentType, parentId])
+}
+
+model AttachmentVersion {
+  id           String     @id @default(uuid())
+  attachmentId String
+  number       Int
+  storageKey   String     @unique
+  originalName String
+  mimeType     String
+  sizeBytes    Int
+  checksum     String
+  createdAt    DateTime   @default(now())
+  attachment   Attachment @relation(fields: [attachmentId], references: [id])
+  @@unique([attachmentId, number])
+}

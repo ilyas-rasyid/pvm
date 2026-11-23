@@ -1,0 +1,103 @@
+model PurchaseOrder {
+  id                 String                   @id @default(uuid())
+  reference          String                   @unique
+  requestId          String
+  vendorId           String
+  costCenterId       String
+  fiscalPeriodId     String
+  deliveryLocationId String?
+  directExceptionId  String?
+  sourcingMode       String                   @default("DIRECT")
+  status             String                   @default("DRAFT")
+  version            Int                      @default(1)
+  total              Decimal                  @default(0) @db.Decimal(18,2)
+  committed          Decimal                  @default(0) @db.Decimal(18,2)
+  expectedAt         DateTime?
+  issuedAt           DateTime?
+  createdAt          DateTime                 @default(now())
+  updatedAt          DateTime                 @updatedAt
+  request            PurchaseRequest          @relation(fields: [requestId], references: [id])
+  vendor             Vendor                   @relation(fields: [vendorId], references: [id])
+  costCenter         CostCenter               @relation(fields: [costCenterId], references: [id])
+  fiscalPeriod       FiscalPeriod             @relation(fields: [fiscalPeriodId], references: [id])
+  location           DeliveryLocation?        @relation(fields: [deliveryLocationId], references: [id])
+  directException    DirectPurchaseException? @relation(fields: [directExceptionId], references: [id])
+  lines              PurchaseOrderLine[]
+  versions           PurchaseOrderVersion[]
+  amendments         PurchaseOrderAmendment[]
+  receipts           GoodsReceipt[]
+  invoices           VendorInvoice[]
+  @@index([vendorId, status])
+  @@index([costCenterId, status])
+}
+
+model PurchaseOrderLine {
+  id            String                     @id @default(uuid())
+  orderId       String
+  requestLineId String
+  awardLineId   String?
+  description   String
+  quantity      Int
+  acceptedQty   Int                        @default(0)
+  invoicedQty   Int                        @default(0)
+  price         Decimal                    @db.Decimal(18,2)
+  taxRate       Decimal                    @default(0) @db.Decimal(9,6)
+  total         Decimal                    @db.Decimal(18,2)
+  order         PurchaseOrder              @relation(fields: [orderId], references: [id])
+  requestLine   PurchaseRequestLine        @relation(fields: [requestLineId], references: [id])
+  awardLine     RfqAwardLine?              @relation(fields: [awardLineId], references: [id])
+  versionLines  PurchaseOrderVersionLine[]
+  prAllocations PrQuantityAllocation[]
+  receiptLines  GoodsReceiptLine[]
+  invoiceLines  VendorInvoiceLine[]
+  allocations   InvoiceReceiptAllocation[]
+  @@index([requestLineId])
+}
+
+model PurchaseOrderVersion {
+  id             String                     @id @default(uuid())
+  orderId        String
+  number         Int
+  total          Decimal                    @db.Decimal(18,2)
+  vendorSnapshot String
+  reason         String
+  createdAt      DateTime                   @default(now())
+  order          PurchaseOrder              @relation(fields: [orderId], references: [id])
+  lines          PurchaseOrderVersionLine[]
+  @@unique([orderId, number])
+}
+
+model PurchaseOrderVersionLine {
+  id          String               @id @default(uuid())
+  versionId   String
+  orderLineId String
+  quantity    Int
+  price       Decimal              @db.Decimal(18,2)
+  taxRate     Decimal              @db.Decimal(9,6)
+  total       Decimal              @db.Decimal(18,2)
+  version     PurchaseOrderVersion @relation(fields: [versionId], references: [id])
+  orderLine   PurchaseOrderLine    @relation(fields: [orderLineId], references: [id])
+}
+
+model PurchaseOrderAmendment {
+  id        String        @id @default(uuid())
+  orderId   String
+  reason    String
+  status    String        @default("DRAFT")
+  payload   Json
+  createdBy String
+  appliedAt DateTime?
+  createdAt DateTime      @default(now())
+  order     PurchaseOrder @relation(fields: [orderId], references: [id])
+}
+
+model PrQuantityAllocation {
+  id            String              @id @default(uuid())
+  requestLineId String
+  orderLineId   String
+  quantity      Int
+  releasedQty   Int                 @default(0)
+  requestLine   PurchaseRequestLine @relation(fields: [requestLineId], references: [id])
+  orderLine     PurchaseOrderLine   @relation(fields: [orderLineId], references: [id])
+  @@unique([requestLineId, orderLineId])
+}

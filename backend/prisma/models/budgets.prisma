@@ -1,0 +1,39 @@
+model BudgetAccount {
+  id             String             @id @default(uuid())
+  costCenterId   String
+  fiscalPeriodId String
+  allocated      Decimal            @default(0) @db.Decimal(18, 2)
+  committed      Decimal            @default(0) @db.Decimal(18, 2)
+  verified       Decimal            @default(0) @db.Decimal(18, 2)
+  version        Int                @default(1)
+  costCenter     CostCenter         @relation(fields: [costCenterId], references: [id])
+  fiscalPeriod   FiscalPeriod       @relation(fields: [fiscalPeriodId], references: [id])
+  movements      BudgetMovement[]
+  adjustments    BudgetAdjustment[]
+  @@unique([costCenterId, fiscalPeriodId])
+}
+
+model BudgetMovement {
+  id              String        @id @default(uuid())
+  budgetAccountId String
+  eventKey        String        @unique
+  kind            String
+  deltaAllocated  Decimal       @default(0) @db.Decimal(18,2)
+  deltaCommitted  Decimal       @default(0) @db.Decimal(18,2)
+  deltaVerified   Decimal       @default(0) @db.Decimal(18,2)
+  sourceId        String
+  actorId         String?
+  createdAt       DateTime      @default(now())
+  account         BudgetAccount @relation(fields: [budgetAccountId], references: [id])
+  @@index([budgetAccountId, createdAt])
+}
+
+model BudgetAdjustment {
+  id              String        @id @default(uuid())
+  budgetAccountId String
+  amount          Decimal       @db.Decimal(18,2)
+  reason          String
+  actorId         String
+  createdAt       DateTime      @default(now())
+  account         BudgetAccount @relation(fields: [budgetAccountId], references: [id])
+}

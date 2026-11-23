@@ -1,0 +1,28 @@
+model Vendor {
+  id            String          @id @default(uuid())
+  code          String          @unique
+  name          String
+  email         String?
+  phone         String?
+  address       String?
+  taxIdentifier String?
+  active        Boolean         @default(true)
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  contacts      VendorContact[]
+  quotations    Quotation[]
+  orders        PurchaseOrder[]
+  invoices      VendorInvoice[]
+}
+
+model VendorContact {
+  id       String  @id @default(uuid())
+  vendorId String
+  name     String
+  email    String?
+  phone    String?
+  title    String?
+  primary  Boolean @default(false)
+  active   Boolean @default(true)
+  vendor   Vendor  @relation(fields: [vendorId], references: [id])
+}

@@ -1,0 +1,31 @@
+model GoodsReceipt {
+  id                String             @id @default(uuid())
+  reference         String             @unique
+  orderId           String
+  officerId         String
+  deliveryReference String
+  receivedAt        DateTime           @default(now())
+  status            String             @default("DRAFT")
+  note              String?
+  postedAt          DateTime?
+  voidedAt          DateTime?
+  voidReason        String?
+  version           Int                @default(1)
+  order             PurchaseOrder      @relation(fields: [orderId], references: [id])
+  officer           User               @relation(fields: [officerId], references: [id])
+  lines             GoodsReceiptLine[]
+  @@index([orderId, status])
+}
+
+model GoodsReceiptLine {
+  id           String                     @id @default(uuid())
+  receiptId    String
+  orderLineId  String
+  deliveredQty Int
+  acceptedQty  Int
+  rejectedQty  Int
+  note         String?
+  receipt      GoodsReceipt               @relation(fields: [receiptId], references: [id])
+  orderLine    PurchaseOrderLine          @relation(fields: [orderLineId], references: [id])
+  allocations  InvoiceReceiptAllocation[]
+}

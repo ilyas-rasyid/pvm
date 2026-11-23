@@ -1,0 +1,6 @@
+node_modules
+backend/src/generated
+frontend/src/routeTree.gen.ts
+bun.lock
+coverage
+dist

@@ -1,0 +1,59 @@
+model Notification {
+  id           String    @id @default(uuid())
+  recipientId  String
+  title        String
+  message      String
+  resourceType String?
+  resourceId   String?
+  readAt       DateTime?
+  createdAt    DateTime  @default(now())
+  recipient    User      @relation(fields: [recipientId], references: [id])
+  @@index([recipientId, readAt])
+}
+
+model AuditLog {
+  id           String   @id @default(uuid())
+  actorId      String?
+  action       String
+  resourceType String
+  resourceId   String
+  reason       String?
+  before       Json?
+  after        Json?
+  requestId    String?
+  createdAt    DateTime @default(now())
+  actor        User?    @relation(fields: [actorId], references: [id])
+  @@index([resourceType, resourceId, createdAt])
+}
+
+model OutboxEvent {
+  id          String    @id @default(uuid())
+  kind        String
+  payload     Json
+  status      String    @default("PENDING")
+  attempt     Int       @default(0)
+  availableAt DateTime  @default(now())
+  processedAt DateTime?
+  createdAt   DateTime  @default(now())
+  @@index([status, availableAt])
+}
+
+model IdempotencyRecord {
+  id          String   @id @default(uuid())
+  actorId     String
+  scope       String
+  key         String
+  payloadHash String
+  status      String   @default("COMMITTED")
+  result      Json
+  createdAt   DateTime @default(now())
+  @@unique([actorId, scope, key])
+}
+
+model DocumentSequence {
+  id        String @id @default(uuid())
+  prefix    String
+  year      Int
+  nextValue Int    @default(1)
+  @@unique([prefix, year])
+}

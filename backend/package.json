@@ -1,0 +1,36 @@
+{
+  "name": "@pvms/backend",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "bun --watch src/index.ts",
+    "start": "bun src/index.ts",
+    "worker": "bun src/workers/outbox-worker.ts",
+    "build": "bun build ./src/index.ts --target=bun --outdir=dist --external=@prisma/client --external=@prisma/adapter-pg",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src prisma",
+    "test": "bun test tests",
+    "db:generate": "bunx --bun prisma generate",
+    "db:migrate:dev": "bunx --bun prisma migrate dev",
+    "db:migrate:deploy": "bunx --bun prisma migrate deploy",
+    "db:status": "bunx --bun prisma migrate status",
+    "db:seed": "bun prisma/seed.ts",
+    "db:studio": "bunx --bun prisma studio"
+  },
+  "dependencies": {
+    "elysia": "^1.4.0",
+    "@elysiajs/cors": "^1.4.0",
+    "@prisma/client": "^7.0.0",
+    "@prisma/adapter-pg": "^7.0.0",
+    "pg": "^8.16.0",
+    "zod": "^4.0.0",
+    "decimal.js": "^10.6.0",
+    "dotenv": "^17.2.0"
+  },
+  "devDependencies": {
+    "prisma": "^7.0.0",
+    "@types/pg": "^8.15.0",
+    "@types/bun": "^1.2.0",
+    "typescript": "~5.9.2"
+  }
+}

@@ -1,0 +1,74 @@
+model VendorInvoice {
+  id               String                @id @default(uuid())
+  orderId          String
+  vendorId         String
+  actorId          String
+  number           String
+  normalizedNumber String
+  invoiceDate      DateTime              @db.Date
+  status           String                @default("DRAFT")
+  total            Decimal               @default(0) @db.Decimal(18,2)
+  version          Int                   @default(1)
+  submittedAt      DateTime?
+  matchedAt        DateTime?
+  readyAt          DateTime?
+  createdAt        DateTime              @default(now())
+  updatedAt        DateTime              @updatedAt
+  order            PurchaseOrder         @relation(fields: [orderId], references: [id])
+  vendor           Vendor                @relation(fields: [vendorId], references: [id])
+  actor            User                  @relation(fields: [actorId], references: [id])
+  lines            VendorInvoiceLine[]
+  matches          InvoiceMatchAttempt[]
+  @@unique([vendorId, normalizedNumber])
+  @@index([status, createdAt])
+}
+
+model VendorInvoiceLine {
+  id          String                     @id @default(uuid())
+  invoiceId   String
+  orderLineId String
+  quantity    Int
+  price       Decimal                    @db.Decimal(18,2)
+  taxRate     Decimal                    @db.Decimal(9,6)
+  total       Decimal                    @db.Decimal(18,2)
+  invoice     VendorInvoice              @relation(fields: [invoiceId], references: [id])
+  orderLine   PurchaseOrderLine          @relation(fields: [orderLineId], references: [id])
+  allocations InvoiceReceiptAllocation[]
+}
+
+model InvoiceReceiptAllocation {
+  id            String            @id @default(uuid())
+  invoiceLineId String
+  receiptLineId String
+  orderLineId   String
+  quantity      Int
+  status        String            @default("ACTIVE")
+  createdAt     DateTime          @default(now())
+  releasedAt    DateTime?
+  invoiceLine   VendorInvoiceLine @relation(fields: [invoiceLineId], references: [id])
+  receiptLine   GoodsReceiptLine  @relation(fields: [receiptLineId], references: [id])
+  orderLine     PurchaseOrderLine @relation(fields: [orderLineId], references: [id])
+  @@unique([invoiceLineId, receiptLineId])
+}
+
+model InvoiceMatchAttempt {
+  id            String               @id @default(uuid())
+  invoiceId     String
+  result        String
+  actorId       String
+  summary       String?
+  createdAt     DateTime             @default(now())
+  invoice       VendorInvoice        @relation(fields: [invoiceId], references: [id])
+  discrepancies InvoiceDiscrepancy[]
+}
+
+model InvoiceDiscrepancy {
+  id            String              @id @default(uuid())
+  attemptId     String
+  code          String
+  description   String
+  invoiceLineId String?
+  expected      String?
+  actual        String?
+  attempt       InvoiceMatchAttempt @relation(fields: [attemptId], references: [id])
+}

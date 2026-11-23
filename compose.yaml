@@ -1,0 +1,30 @@
+services:
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: pvms
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-local_demo_password_change_me}
+      POSTGRES_DB: pvms_dev
+    ports: ["127.0.0.1:${DB_PORT:-5435}:5432"]
+    volumes: [pvms_db:/var/lib/postgresql/data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U pvms -d pvms_dev"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+  test-db:
+    image: postgres:17-alpine
+    profiles: ["test"]
+    environment:
+      POSTGRES_USER: pvms
+      POSTGRES_PASSWORD: test_only_password
+      POSTGRES_DB: pvms_test
+    ports: ["127.0.0.1:5433:5432"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U pvms -d pvms_test"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+volumes:
+  pvms_db:

@@ -1,0 +1,111 @@
+model Organization {
+  id          String       @id @default(uuid())
+  code        String       @unique
+  name        String
+  timezone    String       @default("Asia/Makassar")
+  currency    String       @default("IDR")
+  active      Boolean      @default(true)
+  createdAt   DateTime     @default(now())
+  departments Department[]
+  users       User[]
+}
+
+model Department {
+  id             String            @id @default(uuid())
+  organizationId String
+  code           String            @unique
+  name           String
+  managerId      String?
+  active         Boolean           @default(true)
+  organization   Organization      @relation(fields: [organizationId], references: [id])
+  members        User[]            @relation("Membership")
+  manager        User?             @relation("Manager", fields: [managerId], references: [id])
+  requests       PurchaseRequest[]
+  costCenters    CostCenter[]
+}
+
+model User {
+  id                 String                    @id @default(uuid())
+  organizationId     String
+  departmentId       String?
+  email              String                    @unique
+  name               String
+  passwordHash       String
+  role               String                    @default("EMPLOYEE")
+  active             Boolean                   @default(true)
+  mustChangePassword Boolean                   @default(false)
+  createdAt          DateTime                  @default(now())
+  updatedAt          DateTime                  @updatedAt
+  organization       Organization              @relation(fields: [organizationId], references: [id])
+  department         Department?               @relation("Membership", fields: [departmentId], references: [id])
+  managedDepartments Department[]              @relation("Manager")
+  sessions           AuthSession[]
+  requests           PurchaseRequest[]
+  approvals          PurchaseRequestApproval[]
+  receipts           GoodsReceipt[]
+  invoices           VendorInvoice[]
+  notifications      Notification[]
+  audits             AuditLog[]
+}
+
+model AuthSession {
+  id                String    @id @default(uuid())
+  userId            String
+  tokenHash         String    @unique
+  csrfTokenHash     String
+  createdAt         DateTime  @default(now())
+  lastSeenAt        DateTime  @default(now())
+  idleExpiresAt     DateTime
+  absoluteExpiresAt DateTime
+  revokedAt         DateTime?
+  user              User      @relation(fields: [userId], references: [id])
+  @@index([userId, revokedAt])
+}
+
+model CostCenter {
+  id           String            @id @default(uuid())
+  departmentId String
+  code         String            @unique
+  name         String
+  active       Boolean           @default(true)
+  department   Department        @relation(fields: [departmentId], references: [id])
+  budgets      BudgetAccount[]
+  requests     PurchaseRequest[]
+  orders       PurchaseOrder[]
+}
+
+model DeliveryLocation {
+  id      String          @id @default(uuid())
+  code    String          @unique
+  name    String
+  address String?
+  active  Boolean         @default(true)
+  orders  PurchaseOrder[]
+}
+
+model ItemCategory {
+  id           String                @id @default(uuid())
+  code         String                @unique
+  name         String
+  active       Boolean               @default(true)
+  requestLines PurchaseRequestLine[]
+}
+
+model ProcurementPolicy {
+  id                      String   @id @default(uuid())
+  version                 Int      @unique
+  directPurchaseEnabled   Boolean  @default(true)
+  directPurchaseThreshold Decimal  @db.Decimal(18, 2)
+  effectiveFrom           DateTime @default(now())
+  createdAt               DateTime @default(now())
+}
+
+model FiscalPeriod {
+  id        String          @id @default(uuid())
+  code      String          @unique
+  startDate DateTime        @db.Date
+  endDate   DateTime        @db.Date
+  status    String          @default("OPEN")
+  budgets   BudgetAccount[]
+  orders    PurchaseOrder[]
+}

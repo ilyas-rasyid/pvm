@@ -1,0 +1,38 @@
+{
+  "name": "pvms",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "frontend",
+    "backend"
+  ],
+  "scripts": {
+    "dev": "bun run --parallel dev:backend dev:frontend",
+    "dev:backend": "bun run --cwd backend dev",
+    "dev:frontend": "bun run --cwd frontend dev",
+    "dev:worker": "bun run --cwd backend worker",
+    "build": "bun run db:generate && bun run --cwd backend build && bun run --cwd frontend build",
+    "typecheck": "bun run --cwd backend typecheck && bun run --cwd frontend typecheck",
+    "lint": "eslint frontend/src backend/src backend/prisma scripts",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "check:architecture": "node scripts/check-architecture.mjs",
+    "test:unit": "bun test backend/tests/unit frontend/src",
+    "test:integration": "bun test backend/tests/integration",
+    "check": "bun run format:check && bun run lint && bun run typecheck && bun run check:architecture && bun run test:unit && bun run build",
+    "db:up": "docker compose up -d db",
+    "db:down": "docker compose stop db",
+    "db:generate": "bun run --cwd backend db:generate",
+    "db:migrate:dev": "bun run --cwd backend db:migrate:dev",
+    "db:migrate:deploy": "bun run --cwd backend db:migrate:deploy",
+    "db:seed": "bun run --cwd backend db:seed",
+    "db:status": "bun run --cwd backend db:status"
+  },
+  "devDependencies": {
+    "prettier": "^3.6.0",
+    "eslint": "^9.31.0",
+    "typescript": "~5.9.2",
+    "typescript-eslint": "^8.38.0",
+    "@eslint/js": "^9.31.0"
+  }
+}

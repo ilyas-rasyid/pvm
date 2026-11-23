@@ -1,0 +1,36 @@
+name: PVMS Quality
+on:
+  push:
+    branches: [main]
+  pull_request:
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: pvms
+          POSTGRES_PASSWORD: test_only_password
+          POSTGRES_DB: pvms_test
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U pvms -d pvms_test"
+          --health-interval 5s --health-timeout 3s --health-retries 20
+    env:
+      DATABASE_URL: postgresql://pvms:test_only_password@localhost:5432/pvms_test
+      APP_ORIGIN: http://localhost:5173
+      NODE_ENV: test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: "1.3.3"
+      - run: bun ci
+      - run: bun run --cwd backend db:generate
+      - run: bun run --cwd backend db:migrate:deploy
+      - run: bun run check:architecture
+      - run: bun run lint
+      - run: bun run typecheck
+      - run: bun run test:unit
+      - run: bun run build

@@ -1,0 +1,109 @@
+model Rfq {
+  id          String          @id @default(uuid())
+  reference   String          @unique
+  requestId   String
+  officerId   String
+  status      String          @default("DRAFT")
+  deadline    DateTime?
+  version     Int             @default(1)
+  createdAt   DateTime        @default(now())
+  request     PurchaseRequest @relation(fields: [requestId], references: [id])
+  lines       RfqLine[]
+  invitations RfqInvitation[]
+  quotations  Quotation[]
+  award       RfqAward?
+}
+
+model RfqLine {
+  id            String                  @id @default(uuid())
+  rfqId         String
+  requestLineId String
+  quantity      Int
+  rfq           Rfq                     @relation(fields: [rfqId], references: [id])
+  requestLine   PurchaseRequestLine     @relation(fields: [requestLineId], references: [id])
+  quoteLines    QuotationRevisionLine[]
+  awardLines    RfqAwardLine[]
+}
+
+model RfqInvitation {
+  id       String @id @default(uuid())
+  rfqId    String
+  vendorId String
+  status   String @default("RECORDED")
+  rfq      Rfq    @relation(fields: [rfqId], references: [id])
+  @@unique([rfqId, vendorId])
+}
+
+model Quotation {
+  id        String              @id @default(uuid())
+  rfqId     String
+  vendorId  String
+  reference String
+  createdAt DateTime            @default(now())
+  rfq       Rfq                 @relation(fields: [rfqId], references: [id])
+  vendor    Vendor              @relation(fields: [vendorId], references: [id])
+  revisions QuotationRevision[]
+  @@unique([rfqId, vendorId, reference])
+}
+
+model QuotationRevision {
+  id          String                  @id @default(uuid())
+  quotationId String
+  number      Int
+  validUntil  DateTime?
+  leadDays    Int                     @default(7)
+  notes       String?
+  createdAt   DateTime                @default(now())
+  quotation   Quotation               @relation(fields: [quotationId], references: [id])
+  lines       QuotationRevisionLine[]
+  @@unique([quotationId, number])
+}
+
+model QuotationRevisionLine {
+  id         String            @id @default(uuid())
+  revisionId String
+  rfqLineId  String
+  quantity   Int
+  price      Decimal           @db.Decimal(18,2)
+  taxRate    Decimal           @default(0) @db.Decimal(9,6)
+  revision   QuotationRevision @relation(fields: [revisionId], references: [id])
+  rfqLine    RfqLine           @relation(fields: [rfqLineId], references: [id])
+  awards     RfqAwardLine[]
+  @@unique([revisionId, rfqLineId])
+}
+
+model RfqAward {
+  id        String         @id @default(uuid())
+  rfqId     String         @unique
+  reason    String
+  actorId   String
+  createdAt DateTime       @default(now())
+  rfq       Rfq            @relation(fields: [rfqId], references: [id])
+  lines     RfqAwardLine[]
+}
+
+model RfqAwardLine {
+  id              String                @id @default(uuid())
+  awardId         String
+  rfqLineId       String
+  quotationLineId String
+  quantity        Int
+  issuedQty       Int                   @default(0)
+  releasedQty     Int                   @default(0)
+  award           RfqAward              @relation(fields: [awardId], references: [id])
+  rfqLine         RfqLine               @relation(fields: [rfqLineId], references: [id])
+  quotationLine   QuotationRevisionLine @relation(fields: [quotationLineId], references: [id])
+  poLines         PurchaseOrderLine[]
+}
+
+model DirectPurchaseException {
+  id            String          @id @default(uuid())
+  requestId     String
+  vendorId      String
+  reason        String
+  policyVersion Int
+  threshold     Decimal         @db.Decimal(18,2)
+  createdBy     String
+  createdAt     DateTime        @default(now())
+  orders        PurchaseOrder[]
+}

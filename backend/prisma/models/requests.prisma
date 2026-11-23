@@ -1,0 +1,65 @@
+model PurchaseRequest {
+  id             String                    @id @default(uuid())
+  reference      String                    @unique
+  title          String
+  requesterId    String
+  departmentId   String
+  costCenterId   String
+  neededBy       DateTime                  @db.Date
+  justification  String
+  status         String                    @default("DRAFT")
+  estimatedTotal Decimal                   @default(0) @db.Decimal(18,2)
+  version        Int                       @default(1)
+  submittedAt    DateTime?
+  approvedAt     DateTime?
+  createdAt      DateTime                  @default(now())
+  updatedAt      DateTime                  @updatedAt
+  requester      User                      @relation(fields: [requesterId], references: [id])
+  department     Department                @relation(fields: [departmentId], references: [id])
+  costCenter     CostCenter                @relation(fields: [costCenterId], references: [id])
+  lines          PurchaseRequestLine[]
+  approvals      PurchaseRequestApproval[]
+  rfqs           Rfq[]
+  orders         PurchaseOrder[]
+  @@index([departmentId, status])
+  @@index([requesterId, createdAt])
+}
+
+model PurchaseRequestLine {
+  id             String                 @id @default(uuid())
+  requestId      String
+  categoryId     String?
+  description    String
+  unit           String                 @default("UNIT")
+  quantity       Int
+  approvedQty    Int                    @default(0)
+  awardedQty     Int                    @default(0)
+  issuedQty      Int                    @default(0)
+  estimatedPrice Decimal                @db.Decimal(18,2)
+  lineTotal      Decimal                @db.Decimal(18,2)
+  request        PurchaseRequest        @relation(fields: [requestId], references: [id])
+  category       ItemCategory?          @relation(fields: [categoryId], references: [id])
+  rfqLines       RfqLine[]
+  poLines        PurchaseOrderLine[]
+  allocations    PrQuantityAllocation[]
+}
+
+model PurchaseRequestApproval {
+  id        String          @id @default(uuid())
+  requestId String
+  actorId   String
+  decision  String
+  reason    String?
+  createdAt DateTime        @default(now())
+  request   PurchaseRequest @relation(fields: [requestId], references: [id])
+  actor     User            @relation(fields: [actorId], references: [id])
+  @@unique([requestId])
+}
+
+model ApprovalException {
+  id        String   @id @default(uuid())
+  requestId String
+  actorId   String
+  reason    String
+  createdAt DateTime @default(now())
+}
