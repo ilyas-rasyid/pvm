@@ -26,7 +26,6 @@ backend/
   src/shared/              Transactions, finance, error responses
   src/workers/             Outbox worker
 scripts/                   Source architecture audit
-.github/workflows/         CI draft
 ```
 
 ## Quickstart (Ubuntu / Antigravity)
