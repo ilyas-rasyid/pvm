@@ -1,16 +1,23 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "@tanstack/react-router";
-import { LockKeyhole, ArrowRight, ShieldCheck } from "lucide-react";
+import { ArrowRight, ShieldCheck } from "lucide-react";
 import { login, HttpProblem } from "../../../shared/api/http-client";
 import { queryClient } from "../../../app/query/query-client";
-import { authKey } from "../hooks/useAuth";
+import { authKey, useAuth } from "../hooks/useAuth";
 
 export function LoginPage() {
   const navigate = useNavigate();
+  const auth = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    if (auth.data) {
+      navigate({ to: "/app" });
+    }
+  }, [auth.data, navigate]);
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
@@ -48,9 +55,6 @@ export function LoginPage() {
       <main className="login-main">
         <div className="login-form-wrap">
           <div className="mobile-brand">PVMS · Procurement</div>
-          <span className="login-icon">
-            <LockKeyhole size={23} />
-          </span>
           <h2>Welcome back</h2>
           <p className="muted">Sign in with your company credentials.</p>
           <form

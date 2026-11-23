@@ -417,6 +417,15 @@ a {
 .button.danger:hover {
   background: var(--danger-bg-subtle);
 }
+.button.danger.solid {
+  background: var(--danger-text);
+  border-color: var(--danger-text);
+  color: #ffffff;
+}
+.button.danger.solid:hover {
+  background: #991b1b;
+  border-color: #991b1b;
+}
 .button.full {
   width: 100%;
 }
@@ -819,7 +828,7 @@ a {
 .login-form-wrap h2 {
   font-size: 27px;
   letter-spacing: -0.04em;
-  margin: 21px 0 8px;
+  margin: 0 0 8px;
   color: var(--text-main);
 }
 .login-form-wrap .muted {
@@ -976,5 +985,89 @@ a {
   .table-toolbar {
     flex-direction: column;
     align-items: stretch;
+  }
+}
+
+/* Modal Dialog */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(15, 23, 42, 0.65);
+  backdrop-filter: blur(2px);
+  animation: modalFadeIn 0.15s ease-out;
+}
+.modal-dialog {
+  background: var(--surface-base);
+  border: 1px solid var(--border-base);
+  border-radius: 12px;
+  box-shadow:
+    0 20px 25px -5px rgba(0, 0, 0, 0.25),
+    0 8px 10px -6px rgba(0, 0, 0, 0.2);
+  width: 100%;
+  max-width: 440px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  animation: modalScaleUp 0.15s ease-out;
+}
+.modal-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+}
+.modal-icon-wrap {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.modal-icon-wrap.danger {
+  background: var(--danger-bg-subtle);
+  color: var(--danger-text);
+  border: 1px solid var(--danger-border);
+}
+.modal-title-group h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-main);
+}
+.modal-title-group p {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: var(--text-muted);
+  line-height: 1.45;
+}
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 6px;
+}
+@keyframes modalFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes modalScaleUp {
+  from {
+    transform: scale(0.96);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
   }
 }

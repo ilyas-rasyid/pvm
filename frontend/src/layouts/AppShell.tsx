@@ -16,6 +16,8 @@ const roles: Record<string, string> = {
 };
 export function AppShell({ user, children }: { user: User; children: React.ReactNode }) {
   const [open, setOpen] = useState(false);
+  const [showExitConfirm, setShowExitConfirm] = useState(false);
+  const [exiting, setExiting] = useState(false);
   const [dark, setDark] = useState(() => {
     if (typeof window === "undefined") return false;
     const saved = localStorage.getItem("pvms-theme");
@@ -71,7 +73,19 @@ export function AppShell({ user, children }: { user: User; children: React.React
     localStorage.setItem("pvms-theme", next);
   }, [dark]);
 
-  async function exit() {
+  useEffect(() => {
+    if (!showExitConfirm) return;
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape" && !exiting) {
+        setShowExitConfirm(false);
+      }
+    }
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [showExitConfirm, exiting]);
+
+  async function confirmExit() {
+    setExiting(true);
     try {
       await logout();
     } finally {
@@ -183,8 +197,9 @@ export function AppShell({ user, children }: { user: User; children: React.React
             </Link>
             <button
               className="icon-button"
-              onClick={exit}
+              onClick={() => setShowExitConfirm(true)}
               title="Sign out"
+              aria-label="Sign out"
             >
               <LogOut size={17} />
             </button>
@@ -192,6 +207,51 @@ export function AppShell({ user, children }: { user: User; children: React.React
         </header>
         {children}
       </div>
+      {showExitConfirm && (
+        <div
+          className="modal-overlay"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="logout-dialog-title"
+          onClick={() => !exiting && setShowExitConfirm(false)}
+        >
+          <div
+            className="modal-dialog"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="modal-header">
+              <div className="modal-icon-wrap danger">
+                <LogOut size={20} />
+              </div>
+              <div className="modal-title-group">
+                <h3 id="logout-dialog-title">Sign out of PVMS?</h3>
+                <p>
+                  Are you sure you want to sign out of your account? Any unsaved changes in progress
+                  will be lost.
+                </p>
+              </div>
+            </div>
+            <div className="modal-actions">
+              <button
+                type="button"
+                className="button"
+                disabled={exiting}
+                onClick={() => setShowExitConfirm(false)}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="button danger solid"
+                disabled={exiting}
+                onClick={confirmExit}
+              >
+                {exiting ? "Signing out…" : "Sign out"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
