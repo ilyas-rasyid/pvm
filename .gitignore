@@ -25,6 +25,9 @@ coverage/
 playwright-report/
 test-results/
 
+# CI / Workflows
+.github/
+
 # Archives & Temporary files
 *.zip
 *.tar.gz
