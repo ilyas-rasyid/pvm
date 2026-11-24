@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link, useLocation } from "@tanstack/react-router";
-import { Bell, Menu, LogOut, Sun, Moon, ChevronDown } from "lucide-react";
+import { Bell, Menu, LogOut, Sun, Moon, ChevronDown, User as UserIcon, Shield } from "lucide-react";
 
 import { nav } from "../app/config/navigation";
 import { logout } from "../shared/api/http-client";
@@ -17,8 +17,10 @@ const roles: Record<string, string> = {
 };
 export function AppShell({ user, children }: { user: User; children: React.ReactNode }) {
   const [open, setOpen] = useState(false);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
   const [exiting, setExiting] = useState(false);
+  const userMenuRef = useRef<HTMLDivElement>(null);
   const [dark, setDark] = useState(() => {
     if (typeof window === "undefined") {
       return false;
@@ -91,6 +93,32 @@ export function AppShell({ user, children }: { user: User; children: React.React
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [showExitConfirm, exiting]);
 
+  useEffect(() => {
+    if (!userMenuOpen) {
+      return;
+    }
+    function onClickOutside(e: MouseEvent) {
+      if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) {
+        setUserMenuOpen(false);
+      }
+    }
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") {
+        setUserMenuOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", onClickOutside);
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", onClickOutside);
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  }, [userMenuOpen]);
+
+  useEffect(() => {
+    setUserMenuOpen(false);
+  }, [current]);
+
   async function confirmExit() {
     setExiting(true);
     try {
@@ -157,19 +185,10 @@ export function AppShell({ user, children }: { user: User; children: React.React
             ) : null;
           })}
         </div>
-        <div className="sidebar-footer">
-          <div className="profile-mini">
-            <span className="avatar">{user.name.slice(0, 1).toUpperCase()}</span>
-            <div>
-              <strong>{user.name}</strong>
-              <span>{roles[user.role] || user.role}</span>
-            </div>
-          </div>
-        </div>
       </aside>
       <div className="app-main">
         <header className="topbar">
-          <div className="inline-list">
+          <div className="topbar-left">
             <button
               className="icon-button mobile-menu"
               aria-label="Open menu"
@@ -195,21 +214,71 @@ export function AppShell({ user, children }: { user: User; children: React.React
             >
               <Bell size={18} />
             </Link>
-            <Link
-              to={"/app/profile" as "/app"}
-              className="inline-list"
+            <div
+              className="user-dropdown-wrapper"
+              ref={userMenuRef}
             >
-              <span className="avatar">{user.name.slice(0, 1)}</span>
-              <ChevronDown size={13} />
-            </Link>
-            <button
-              className="icon-button"
-              onClick={() => setShowExitConfirm(true)}
-              title="Sign out"
-              aria-label="Sign out"
-            >
-              <LogOut size={17} />
-            </button>
+              <button
+                type="button"
+                className="user-menu-trigger"
+                onClick={() => setUserMenuOpen((prev) => !prev)}
+                aria-expanded={userMenuOpen}
+                aria-haspopup="true"
+                aria-label="User account menu"
+              >
+                <span className="avatar">{user.name.slice(0, 1).toUpperCase()}</span>
+                <ChevronDown
+                  size={14}
+                  className={`chevron-indicator ${userMenuOpen ? "rotated" : ""}`}
+                />
+              </button>
+              {userMenuOpen && (
+                <div
+                  className="user-dropdown-menu"
+                  role="menu"
+                >
+                  <div className="user-dropdown-header">
+                    <strong className="user-name">{user.name}</strong>
+                    <span className="user-email">{user.email}</span>
+                    <span className="user-role-badge">{roles[user.role] || user.role}</span>
+                  </div>
+                  <div className="user-dropdown-divider" />
+                  <div className="user-dropdown-body">
+                    <Link
+                      to={"/app/profile" as "/app"}
+                      className="user-dropdown-item"
+                      role="menuitem"
+                      onClick={() => setUserMenuOpen(false)}
+                    >
+                      <UserIcon size={15} />
+                      <span>My profile</span>
+                    </Link>
+                    <Link
+                      to={"/app/profile/security" as "/app"}
+                      className="user-dropdown-item"
+                      role="menuitem"
+                      onClick={() => setUserMenuOpen(false)}
+                    >
+                      <Shield size={15} />
+                      <span>Security settings</span>
+                    </Link>
+                  </div>
+                  <div className="user-dropdown-divider" />
+                  <button
+                    type="button"
+                    className="user-dropdown-item danger"
+                    role="menuitem"
+                    onClick={() => {
+                      setUserMenuOpen(false);
+                      setShowExitConfirm(true);
+                    }}
+                  >
+                    <LogOut size={15} />
+                    <span>Sign out</span>
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         </header>
         {children}

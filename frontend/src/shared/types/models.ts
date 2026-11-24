@@ -4,6 +4,9 @@ export type User = {
   email: string;
   role: string;
   departmentId: string | null;
+  department?: string | { id: string; name: string; code?: string } | null;
+  departmentName?: string | null;
+  departmentCode?: string | null;
   mustChangePassword?: boolean;
 };
 export type Paginated<T> = {

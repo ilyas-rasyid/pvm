@@ -1,4 +1,3 @@
-
 import { Link } from "@tanstack/react-router";
 import { ArrowLeft, RefreshCw, ExternalLink, Send } from "lucide-react";
 
@@ -96,11 +95,22 @@ export function DocumentDetailPage({ kind, id }: { kind: Kind; id: string }) {
               <div key={field}>
                 <dt>{human(field)}</dt>
                 <dd>
-                  {/total|price|allocated|committed|verified|available/i.test(field)
-                    ? rupiah(data?.[field])
-                    : /At$|By$|Date$/.test(field)
-                      ? dateText(data?.[field])
-                      : cellText(data?.[field])}
+                  {field === "departmentId" &&
+                  (data?.departmentName ||
+                    (typeof data?.department === "string"
+                      ? data.department
+                      : (data?.department as { name?: string } | undefined)?.name))
+                    ? String(
+                        data?.departmentName ||
+                          (typeof data?.department === "string"
+                            ? data.department
+                            : (data?.department as { name?: string } | undefined)?.name),
+                      )
+                    : /total|price|allocated|committed|verified|available/i.test(field)
+                      ? rupiah(data?.[field])
+                      : /At$|By$|Date$/.test(field)
+                        ? dateText(data?.[field])
+                        : cellText(data?.[field])}
                 </dd>
               </div>
             ))}

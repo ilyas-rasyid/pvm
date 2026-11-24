@@ -1,3 +1,4 @@
+import { Link } from "@tanstack/react-router";
 import { LockKeyhole, UserRound } from "lucide-react";
 
 import { useProfile } from "../hooks/useProfile";
@@ -76,16 +77,22 @@ export function ProfilePage({ security = false }: { security?: boolean }) {
               </div>
               <div>
                 <dt>Department</dt>
-                <dd>{user?.departmentId || "Not assigned"}</dd>
+                <dd>
+                  {user?.departmentName ||
+                    (typeof user?.department === "string"
+                      ? user.department
+                      : user?.department?.name) ||
+                    "Not assigned"}
+                </dd>
               </div>
             </dl>
-            <a
+            <Link
               className="button"
-              href="/app/profile/security"
+              to="/app/profile/security"
               style={{ marginTop: 22 }}
             >
               Security settings
-            </a>
+            </Link>
           </div>
         </section>
       ) : (

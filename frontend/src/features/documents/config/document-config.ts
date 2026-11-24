@@ -30,5 +30,6 @@ export const extraFields: Record<Kind, string[]> = {
   budget: ["allocated", "committed", "verified", "available", "costCenterId"],
 };
 export function human(key: string) {
+  if (key === "departmentId") return "Department";
   return key.replace(/([A-Z])/g, " $1").replace(/^./, (v) => v.toUpperCase());
 }

@@ -3,7 +3,17 @@ import { Elysia } from "elysia";
 import { db } from "../../../infrastructure/database/prisma-client";
 import { AppError, assert } from "../../../shared/errors/app-error";
 import { response } from "../../../shared/http/context";
-import { checkOrigin, checkPreAuth, createSession, newPreAuth, currentSession, secureActor, random, sha, sessionCookie } from "../../../security/session";
+import {
+  checkOrigin,
+  checkPreAuth,
+  createSession,
+  newPreAuth,
+  currentSession,
+  secureActor,
+  random,
+  sha,
+  sessionCookie,
+} from "../../../security/session";
 import { loginSchema, changeSchema } from "../payload/auth.schema";
 import { attempts } from "../policy/login-throttle";
 
@@ -28,7 +38,18 @@ export const authRoutes = new Elysia({ prefix: "/auth" })
     if (rate && rate.expires > Date.now() && rate.count >= 8) {
       throw new AppError("LOGIN_RATE_LIMITED", "Too many attempts. Try again later", 429);
     }
-    const user = await db.user.findUnique({ where: { email: normalized } });
+    const user = await db.user.findUnique({
+      where: { email: normalized },
+      include: {
+        department: {
+          select: {
+            id: true,
+            name: true,
+            code: true,
+          },
+        },
+      },
+    });
     const ok = user && user.active && (await Bun.password.verify(password, user.passwordHash));
     if (!ok) {
       const count = rate && rate.expires > Date.now() ? rate.count + 1 : 1;
@@ -42,6 +63,10 @@ export const authRoutes = new Elysia({ prefix: "/auth" })
       name: user.name,
       email: user.email,
       role: user.role,
+      departmentId: user.departmentId,
+      department: user.department?.name ?? null,
+      departmentName: user.department?.name ?? null,
+      departmentCode: user.department?.code ?? null,
       mustChangePassword: user.mustChangePassword,
     });
   })
@@ -64,10 +89,27 @@ export const authRoutes = new Elysia({ prefix: "/auth" })
         email: true,
         role: true,
         departmentId: true,
+        department: {
+          select: {
+            id: true,
+            name: true,
+            code: true,
+          },
+        },
         mustChangePassword: true,
       },
     });
-    return response(user);
+    return response({
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      departmentId: user.departmentId,
+      department: user.department?.name ?? null,
+      departmentName: user.department?.name ?? null,
+      departmentCode: user.department?.code ?? null,
+      mustChangePassword: user.mustChangePassword,
+    });
   })
   .get("/sessions", async (ctx) => {
     const actor = await secureActor(ctx, undefined, false);
