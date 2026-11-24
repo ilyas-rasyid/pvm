@@ -1,86 +1,32 @@
-import { useState } from "react";
-import { useNavigate } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, CheckCircle2 } from "lucide-react";
-import { apiGet, apiPost } from "../../../shared/api/http-client";
+
+import { useQuotationCompare } from "../hooks/useQuotationCompare";
 import { PageHeader } from "../../../shared/ui/PageHeader";
 import { ErrorNotice, Loading } from "../../../shared/ui/Feedback";
 import { rupiah } from "../../../shared/formatters/value";
 
-type OfferLine = {
-  id: string;
-  rfqLineId: string;
-  quantity: number;
-  price: string;
-  taxRate: string;
-};
-type Quote = {
-  id: string;
-  vendor: {
-    name: string;
-  };
-  revisions: {
-    lines: OfferLine[];
-    leadDays: number;
-    validUntil: string | null;
-  }[];
-};
-type Rfq = {
-  id: string;
-  reference: string;
-  lines: {
-    id: string;
-    quantity: number;
-    requestLine: {
-      description: string;
-    };
-  }[];
-  quotations: Quote[];
-};
 export function QuotationComparePage({ id }: { id: string }) {
-  const navigate = useNavigate();
-  const [selection, setSelection] = useState<Record<string, number>>({});
-  const [reason, setReason] = useState("");
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState("");
-  const { data, isPending } = useQuery({
-    queryKey: ["rfq", "comparison", id],
-    queryFn: async () => {
-      await apiGet(`/rfqs/${id}`);
-      return apiGet<Rfq>(`/rfqs/${id}/comparison`);
-    },
-  });
-  async function award() {
-    setBusy(true);
-    setError("");
-    try {
-      const lines =
-        data?.quotations.flatMap((q) =>
-          q.revisions.slice(0, 1).flatMap((r) =>
-            r.lines
-              .filter((l) => (selection[l.id] || 0) > 0)
-              .map((l) => ({
-                rfqLineId: l.rfqLineId,
-                quotationLineId: l.id,
-                quantity: selection[l.id],
-              })),
-          ),
-        ) || [];
-      if (!lines.length) throw new Error("Select at least one quantity to award");
-      await apiPost(`/rfqs/${id}/award`, { reason, lines }, `/rfqs/${id}`);
-      await navigate({ to: `/app/rfqs/${id}` as "/app" });
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Award failed");
-    } finally {
-      setBusy(false);
-    }
-  }
-  if (isPending)
+  const {
+    navigate,
+    selection,
+    setSelection,
+    reason,
+    setReason,
+    busy,
+    setBusy,
+    error,
+    setError,
+    data,
+    isPending,
+    award,
+  } = useQuotationCompare({ id });
+  if (isPending) {
     return (
       <main className="page">
         <Loading />
       </main>
     );
+  }
   return (
     <main className="page">
       <PageHeader

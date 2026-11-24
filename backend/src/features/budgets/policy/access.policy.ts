@@ -1,0 +1,1 @@
+export const budgetReaders = ["DEPARTMENT_MANAGER", "PROCUREMENT_OFFICER", "FINANCE_OFFICER", "ADMIN"];

@@ -1,10 +1,9 @@
 import { Link } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+
 import { ArrowUpRight, Plus, ArrowRight, ClipboardCheck } from "lucide-react";
-import { apiGet } from "../../../shared/api/http-client";
+
 import { PageHeader } from "../../../shared/ui/PageHeader";
 import { Loading, ErrorNotice } from "../../../shared/ui/Feedback";
-import { useAuth } from "../../auth/hooks/useAuth";
 
 const config: Record<
   string,
@@ -52,14 +51,17 @@ const config: Record<
     queue: "/app/admin/audit",
   },
 };
+import { useDashboard } from "../hooks/useDashboard";
+
 export function DashboardPage() {
-  const { data: user } = useAuth();
-  const role = user?.role || "EMPLOYEE";
-  const conf = config[role];
-  const { data, isPending, error } = useQuery({
-    queryKey: ["dashboard", role],
-    queryFn: () => apiGet<Record<string, number>>("/dashboard/summary"),
-  });
+  const {
+    user,
+    role,
+    conf,
+    data,
+    isPending,
+    error,
+  } = useDashboard();
   return (
     <main className="page">
       <PageHeader

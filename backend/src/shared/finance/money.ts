@@ -1,4 +1,5 @@
 import Decimal from "decimal.js";
+
 import { AppError } from "../errors/app-error";
 
 Decimal.set({ precision: 36, rounding: Decimal.ROUND_HALF_UP });
@@ -11,7 +12,9 @@ export const totalLine = (qty: number, price: string, rate: string) => {
   return money(subtotal.plus(subtotal.mul(rate).toDecimalPlaces(2)));
 };
 export const requireNonnegative = (v: Decimal, code = "AMOUNT_INVALID") => {
-  if (!v.isFinite() || v.lt(0)) throw new AppError(code, "Amount cannot be negative", 422);
+  if (!v.isFinite() || v.lt(0)) {
+    throw new AppError(code, "Amount cannot be negative", 422);
+  }
 };
 export function cumulativeTax(qty: number, price: string, rate: string) {
   return dec(qty).mul(price).mul(rate).toDecimalPlaces(2);

@@ -1,56 +1,40 @@
-import { useState } from "react";
+
 import { Link } from "@tanstack/react-router";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { FileCheck2, AlertTriangle } from "lucide-react";
-import { apiGet, apiPost } from "../../../shared/api/http-client";
+
 import { PageHeader } from "../../../shared/ui/PageHeader";
 import { StatusBadge } from "../../../shared/ui/StatusBadge";
 import { ErrorNotice, Loading } from "../../../shared/ui/Feedback";
 import { rupiah } from "../../../shared/formatters/value";
 import type { Invoice } from "../../../shared/types/models";
+import { useMatchingWorkspace } from "../hooks/useMatchingWorkspace";
 
 export function MatchingWorkspacePage({ id }: { id: string }) {
-  const client = useQueryClient();
-  const [busy, setBusy] = useState("");
-  const [error, setError] = useState("");
-  const { data, isPending, refetch } = useQuery({
-    queryKey: ["document", "invoice", id],
-    queryFn: () => apiGet<Invoice>(`/invoices/${id}`),
-  });
-  async function action(cmd: string) {
-    if (
-      !confirm(
-        cmd === "match"
-          ? "Run three-way matching for every invoice line?"
-          : "Mark this invoice ready for payment? This action is final in the MVP.",
-      )
-    )
-      return;
-    setBusy(cmd);
-    setError("");
-    try {
-      await apiPost(`/invoices/${id}/${cmd}`, {}, `/invoices/${id}`);
-      await client.invalidateQueries({ queryKey: ["list"] });
-      await client.invalidateQueries({ queryKey: ["dashboard"] });
-      await refetch();
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Action failed");
-    } finally {
-      setBusy("");
-    }
-  }
-  if (isPending)
+  const {
+    client,
+    busy,
+    setBusy,
+    error,
+    setError,
+    data,
+    isPending,
+    refetch,
+    action,
+  } = useMatchingWorkspace({ id });
+  if (isPending) {
     return (
       <main className="page">
         <Loading />
       </main>
     );
-  if (!data)
+  }
+  if (!data) {
     return (
       <main className="page">
         <ErrorNotice message="Invoice not found" />
       </main>
     );
+  }
   return (
     <main className="page">
       <PageHeader

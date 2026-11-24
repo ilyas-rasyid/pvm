@@ -1,0 +1,1 @@
+export const reportReaders = ["ADMIN", "PROCUREMENT_OFFICER", "FINANCE_OFFICER", "DEPARTMENT_MANAGER"];

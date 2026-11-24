@@ -2,13 +2,17 @@ import "dotenv/config";
 import { PrismaClient } from "../src/generated/prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 
-if (process.env.NODE_ENV === "production")
+if (process.env.NODE_ENV === "production") {
   throw new Error("Demo seed is not permitted in production");
+}
 const password = process.env.DEMO_PASSWORD;
-if (!password || password.length < 15)
+if (!password || password.length < 15) {
   throw new Error("Set DEMO_PASSWORD to a non-production password with at least 15 characters");
+}
 const url = process.env.DATABASE_URL;
-if (!url || !url.includes("pvms_dev")) throw new Error("Refusing seed outside pvms_dev");
+if (!url || !url.includes("pvms_dev")) {
+  throw new Error("Refusing seed outside pvms_dev");
+}
 const db = new PrismaClient({ adapter: new PrismaPg({ connectionString: url }) });
 const org = await db.organization.upsert({
   where: { code: "PVMS_DEMO" },
@@ -127,6 +131,8 @@ await db.procurementPolicy.upsert({
 });
 console.log("Demo environment seeded.");
 console.log("Demo role emails:");
-for (const x of people) console.log(`  ${x.email} (${x.role})`);
+for (const x of people) {
+  console.log(`  ${x.email} (${x.role})`);
+}
 console.log("Use the DEMO_PASSWORD environment variable; password is never printed.");
 await db.$disconnect();

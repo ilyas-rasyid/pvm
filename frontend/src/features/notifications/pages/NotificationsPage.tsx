@@ -1,6 +1,6 @@
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+
 import { Bell, Check } from "lucide-react";
-import { apiGet, apiPost } from "../../../shared/api/http-client";
+
 import { PageHeader } from "../../../shared/ui/PageHeader";
 import { Loading, Empty, ErrorNotice } from "../../../shared/ui/Feedback";
 import { dateText } from "../../../shared/formatters/value";
@@ -12,16 +12,16 @@ type Notification = {
   createdAt: string;
   readAt: string | null;
 };
+import { useNotifications } from "../hooks/useNotifications";
+
 export function NotificationsPage() {
-  const client = useQueryClient();
-  const { data, isPending, error } = useQuery({
-    queryKey: ["notifications"],
-    queryFn: () => apiGet<Notification[]>("/notifications/"),
-  });
-  async function mark(id?: string) {
-    await apiPost(id ? `/notifications/${id}/read` : "/notifications/read-all");
-    await client.invalidateQueries({ queryKey: ["notifications"] });
-  }
+  const {
+    client,
+    data,
+    isPending,
+    error,
+    mark,
+  } = useNotifications();
   return (
     <main className="page">
       <PageHeader

@@ -1,20 +1,4 @@
-import {
-  LayoutDashboard,
-  FileText,
-  ClipboardCheck,
-  ShoppingCart,
-  Users,
-  Warehouse,
-  ReceiptText,
-  Building2,
-  Landmark,
-  Settings2,
-  BarChart3,
-  Truck,
-  FileCheck2,
-  Scale,
-  ShieldCheck,
-} from "lucide-react";
+import { LayoutDashboard, FileText, ClipboardCheck, ShoppingCart, Users, Warehouse, ReceiptText, Building2, Landmark, Settings2, BarChart3, Truck, FileCheck2, Scale, ShieldCheck } from "lucide-react";
 
 export const nav = [
   {

@@ -1,19 +1,20 @@
 import { Elysia } from "elysia";
 import { ZodError } from "zod";
+
 import { db } from "./infrastructure/database/prisma-client";
 import { AppError } from "./shared/errors/app-error";
-import { authRoutes } from "./features/authentication/auth.routes";
-import { adminRoutes } from "./features/administration/admin.routes";
-import { masterRoutes } from "./features/master-data/master.routes";
-import { requestRoutes } from "./features/purchase-requests/request.routes";
-import { sourcingRoutes } from "./features/sourcing/sourcing.routes";
-import { orderRoutes } from "./features/purchase-orders/order.routes";
-import { receivingRoutes } from "./features/receiving/receiving.routes";
-import { invoiceRoutes } from "./features/invoices/invoice.routes";
-import { budgetsRoutes } from "./features/budgets/budgets.routes";
-import { reportsRoutes } from "./features/reports/reports.routes";
-import { attachmentRoutes } from "./features/attachments/attachments.routes";
-import { notificationRoutes } from "./features/notifications/notifications.routes";
+import { authRoutes } from "./features/authentication/handler/auth.handler";
+import { adminRoutes } from "./features/administration/handler/admin.handler";
+import { masterRoutes } from "./features/master-data/handler/master.handler";
+import { requestRoutes } from "./features/purchase-requests/handler/request.handler";
+import { sourcingRoutes } from "./features/sourcing/handler/sourcing.handler";
+import { orderRoutes } from "./features/purchase-orders/handler/order.handler";
+import { receivingRoutes } from "./features/receiving/handler/receiving.handler";
+import { invoiceRoutes } from "./features/invoices/handler/invoice.handler";
+import { budgetsRoutes } from "./features/budgets/handler/budgets.handler";
+import { reportsRoutes } from "./features/reports/handler/reports.handler";
+import { attachmentRoutes } from "./features/attachments/handler/attachments.handler";
+import { notificationRoutes } from "./features/notifications/handler/notifications.handler";
 
 export function createApp() {
   return new Elysia()

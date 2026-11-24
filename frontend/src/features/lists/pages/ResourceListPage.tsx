@@ -1,75 +1,34 @@
-import { useEffect, useMemo, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { Plus, Search, RefreshCw, ChevronLeft, ChevronRight } from "lucide-react";
-import { apiGetCollection } from "../../../shared/api/http-client";
-import { PageHeader } from "../../../shared/ui/PageHeader";
-import { StatusBadge } from "../../../shared/ui/StatusBadge";
-import { ErrorNotice, Loading, Empty } from "../../../shared/ui/Feedback";
-import { rupiah, dateText, cellText } from "../../../shared/formatters/value";
-import { configs, type ResourceKind } from "../config/resource-config";
-import type { EntityRow } from "../../../shared/types/models";
 
-function nested(obj: Record<string, unknown>, path: string): unknown {
-  return path
-    .split(".")
-    .reduce<unknown>(
-      (acc, key) =>
-        typeof acc === "object" && acc !== null ? (acc as Record<string, unknown>)[key] : undefined,
-      obj,
-    );
-}
-function printable(value: unknown, type?: "money" | "date" | "status") {
-  if (type === "status") return <StatusBadge status={String(value || "UNKNOWN")} />;
-  if (type === "money")
-    return <span style={{ fontVariantNumeric: "tabular-nums" }}>{rupiah(value)}</span>;
-  if (type === "date") return dateText(value);
-  if (typeof value === "boolean") return <StatusBadge status={value ? "ACTIVE" : "INACTIVE"} />;
-  return cellText(value);
-}
+import { useResourceList } from "../hooks/useResourceList";
+import { ResourceRecordsTable } from "../components/ResourceRecordsTable";
+import { PageHeader } from "../../../shared/ui/PageHeader";
+import { ErrorNotice, Loading, Empty } from "../../../shared/ui/Feedback";
+import { type ResourceKind } from "../config/resource-config";
+
 export function ResourceListPage({ kind }: { kind: ResourceKind }) {
-  const config = configs[kind];
-  const params = new URLSearchParams(location.search);
-  const [page, setPage] = useState(Number(params.get("page")) || 1);
-  const [search, setSearch] = useState(params.get("search") || "");
-  const [debounced, setDebounced] = useState(search);
-  const [status, setStatus] = useState(params.get("status") || "");
-  useEffect(() => {
-    const timer = setTimeout(() => setDebounced(search), 300);
-    return () => clearTimeout(timer);
-  }, [search]);
-  useEffect(() => {
-    const url = new URL(location.href);
-    url.searchParams.set("page", String(page));
-    if (debounced) url.searchParams.set("search", debounced);
-    else url.searchParams.delete("search");
-    if (status) url.searchParams.set("status", status);
-    else url.searchParams.delete("status");
-    history.replaceState(history.state, "", url);
-  }, [page, debounced, status]);
-  const query = useMemo(
-    () =>
-      new URLSearchParams({
-        page: String(page),
-        pageSize: "20",
-        ...(debounced ? { search: debounced } : {}),
-        ...(status ? { status } : {}),
-      }).toString(),
-    [page, debounced, status],
-  );
-  const endpoint = `${config.endpoint}${config.endpoint.includes("?") ? "&" : "?"}${query}`;
-  const { data, isPending, error, refetch, isFetching } = useQuery({
-    queryKey: ["list", kind, query],
-    queryFn: () => apiGetCollection<EntityRow>(endpoint),
-    staleTime: 20000,
-  });
-  const rows = data?.data || [];
-  const meta = data?.meta || {
-    page: 1,
-    pageSize: rows.length,
-    totalItems: rows.length,
-    totalPages: 1,
-  };
+  const {
+    config,
+    params,
+    page,
+    setPage,
+    search,
+    setSearch,
+    debounced,
+    setDebounced,
+    status,
+    setStatus,
+    query,
+    endpoint,
+    data,
+    isPending,
+    error,
+    refetch,
+    isFetching,
+    rows,
+    meta,
+  } = useResourceList({ kind });
   return (
     <main className="page">
       <PageHeader
@@ -159,46 +118,10 @@ export function ResourceListPage({ kind }: { kind: ResourceKind }) {
           <Empty />
         ) : (
           <div className="table-wrap">
-            <table className="data-table">
-              <thead>
-                <tr>
-                  {config.columns.map((col) => (
-                    <th key={col.key}>{col.label}</th>
-                  ))}
-                  {config.detail && <th> </th>}
-                </tr>
-              </thead>
-              <tbody>
-                {rows.map((row) => (
-                  <tr key={row.id}>
-                    {config.columns.map((col, i) => (
-                      <td key={col.key}>
-                        {i === 0 && config.detail ? (
-                          <Link
-                            className="text-link"
-                            to={`${config.detail}/${row.id}` as "/app"}
-                          >
-                            {printable(nested(row, col.key), col.type)}
-                          </Link>
-                        ) : (
-                          printable(nested(row, col.key), col.type)
-                        )}
-                      </td>
-                    ))}
-                    {config.detail && (
-                      <td>
-                        <Link
-                          className="button small-btn"
-                          to={`${config.detail}/${row.id}` as "/app"}
-                        >
-                          View
-                        </Link>
-                      </td>
-                    )}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+            <ResourceRecordsTable
+              rows={rows}
+              config={config}
+            />
           </div>
         )}
         <div className="table-footer">

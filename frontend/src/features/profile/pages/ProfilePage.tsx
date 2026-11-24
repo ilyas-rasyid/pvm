@@ -1,62 +1,35 @@
-import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
 import { LockKeyhole, UserRound } from "lucide-react";
-import { apiGet, apiPost, apiDelete } from "../../../shared/api/http-client";
-import { useAuth } from "../../auth/hooks/useAuth";
+
+import { useProfile } from "../hooks/useProfile";
 import { PageHeader } from "../../../shared/ui/PageHeader";
 import { ErrorNotice, Loading } from "../../../shared/ui/Feedback";
 import { dateText } from "../../../shared/formatters/value";
 
-type Session = {
-  id: string;
-  current: boolean;
-  createdAt: string;
-  lastSeenAt: string;
-  absoluteExpiresAt: string;
-};
 export function ProfilePage({ security = false }: { security?: boolean }) {
-  const { data: user, isPending } = useAuth();
-  const [oldPassword, setOld] = useState("");
-  const [next, setNext] = useState("");
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
-  const [busy, setBusy] = useState(false);
-  const sessions = useQuery({
-    queryKey: ["auth", "sessions"],
-    queryFn: () => apiGet<Session[]>("/auth/sessions"),
-    enabled: security,
-  });
-  async function change(e: React.FormEvent) {
-    e.preventDefault();
-    setBusy(true);
-    setError("");
-    setSuccess("");
-    try {
-      await apiPost("/auth/change-password", { oldPassword, newPassword: next });
-      setOld("");
-      setNext("");
-      setSuccess("Password changed. Other sessions were revoked.");
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Change failed");
-    } finally {
-      setBusy(false);
-    }
-  }
-  async function revoke(id: string) {
-    if (!confirm("Revoke this session?")) return;
-    try {
-      await apiDelete(`/auth/sessions/${id}`);
-      await sessions.refetch();
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Unable to revoke session");
-    }
-  }
-  if (isPending)
+  const {
+    user,
+    isPending,
+    oldPassword,
+    setOld,
+    next,
+    setNext,
+    error,
+    setError,
+    success,
+    setSuccess,
+    busy,
+    setBusy,
+    sessions,
+    change,
+    revoke,
+  } = useProfile({ security });
+  if (isPending) {
     return (
       <main className="page">
         <Loading />
       </main>
     );
+  }
   return (
     <main className="page">
       <PageHeader

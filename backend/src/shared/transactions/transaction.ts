@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto";
+
 import { Prisma } from "../../generated/prisma/client";
 import { db } from "../../infrastructure/database/prisma-client";
 import { AppError } from "../errors/app-error";
@@ -23,7 +24,9 @@ export async function serializable<T>(action: (tx: Tx) => Promise<T>): Promise<T
         timeout: 20000,
       });
     } catch (error) {
-      if (!isRetryable(error) || attempt === 2) throw error;
+      if (!isRetryable(error) || attempt === 2) {
+        throw error;
+      }
     }
   }
   throw new AppError("TRANSACTION_CONFLICT", "Please retry this operation");
@@ -86,8 +89,9 @@ export async function command<T>(
   operation: (tx: Tx) => Promise<T>,
 ): Promise<T> {
   const key = ctx.request.headers.get("idempotency-key");
-  if (!key || key.length > 128)
+  if (!key || key.length > 128) {
     throw new AppError("IDEMPOTENCY_KEY_REQUIRED", "Valid Idempotency-Key required", 428);
+  }
   const fingerprint = createHash("sha256")
     .update(JSON.stringify(ctx.body ?? null))
     .digest("hex");
@@ -97,11 +101,12 @@ export async function command<T>(
         where: { actorId_scope_key: { actorId: actor.id, scope, key } },
       });
       if (old) {
-        if (old.payloadHash !== fingerprint)
+        if (old.payloadHash !== fingerprint) {
           throw new AppError(
             "IDEMPOTENCY_KEY_CONFLICT",
             "Key already used for a different request",
           );
+        }
         return old.result as T;
       }
       const result = await operation(tx);
@@ -131,12 +136,15 @@ export async function command<T>(
       (Array.isArray(err?.meta?.target)
         ? err.meta.target.includes("key")
         : String(err?.meta?.target || "").includes("key"));
-    if (!isIdempotencyP2002) throw error;
+    if (!isIdempotencyP2002) {
+      throw error;
+    }
     const found = await db.idempotencyRecord.findUnique({
       where: { actorId_scope_key: { actorId: actor.id, scope, key } },
     });
-    if (!found || found.payloadHash !== fingerprint)
+    if (!found || found.payloadHash !== fingerprint) {
       throw new AppError("IDEMPOTENCY_KEY_CONFLICT", "Idempotency collision");
+    }
     return found.result as T;
   }
 }

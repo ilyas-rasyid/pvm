@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+
 import { apiGet, apiPost } from "../../../shared/api/http-client";
 import { ErrorNotice } from "../../../shared/ui/Feedback";
-import { Field } from "../../forms/components/FormFrame";
+import { Field } from "../../../shared/ui/forms/FormFrame";
 import type { EntityRow } from "../../../shared/types/models";
 
 type RfqLine = {

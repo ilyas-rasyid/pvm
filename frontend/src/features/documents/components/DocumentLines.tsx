@@ -17,7 +17,9 @@ type Line = {
   };
 };
 export function DocumentLines({ lines, kind }: { lines: Line[]; kind: string }) {
-  if (!lines.length) return <div className="empty-state">No line items.</div>;
+  if (!lines.length) {
+    return <div className="empty-state">No line items.</div>;
+  }
   return (
     <div className="table-wrap">
       <table className="data-table">

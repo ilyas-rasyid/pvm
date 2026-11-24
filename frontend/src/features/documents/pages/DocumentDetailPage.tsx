@@ -1,166 +1,51 @@
-import { useState } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+
 import { Link } from "@tanstack/react-router";
 import { ArrowLeft, RefreshCw, ExternalLink, Send } from "lucide-react";
-import { apiGet, apiPost } from "../../../shared/api/http-client";
+
 import { PageHeader } from "../../../shared/ui/PageHeader";
 import { StatusBadge } from "../../../shared/ui/StatusBadge";
 import { Loading, ErrorNotice } from "../../../shared/ui/Feedback";
 import { DocumentLines } from "../components/DocumentLines";
 import { rupiah, dateText, cellText } from "../../../shared/formatters/value";
-import { useAuth } from "../../auth/hooks/useAuth";
 import type { EntityRow } from "../../../shared/types/models";
 import { QuotationPanel } from "../../sourcing/components/QuotationPanel";
+import { titles, extraFields, human } from "../config/document-config";
+import type { Kind } from "../config/document-config";
+import { useDocumentDetail } from "../hooks/useDocumentDetail";
 
-type Kind = "request" | "rfq" | "po" | "receipt" | "invoice" | "vendor" | "user" | "budget";
-const urls: Record<Kind, string> = {
-  request: "/purchase-requests",
-  rfq: "/rfqs",
-  po: "/purchase-orders",
-  receipt: "/goods-receipts",
-  invoice: "/invoices",
-  vendor: "/vendors",
-  user: "/admin/users",
-  budget: "/budgets",
-};
-const titles: Record<Kind, string> = {
-  request: "Purchase request",
-  rfq: "Request for quotation",
-  po: "Purchase order",
-  receipt: "Goods receipt",
-  invoice: "Vendor invoice",
-  vendor: "Vendor",
-  user: "User account",
-  budget: "Budget account",
-};
-const extraFields: Record<Kind, string[]> = {
-  request: ["title", "justification", "neededBy", "estimatedTotal", "departmentId"],
-  rfq: ["deadline", "requestId", "officerId"],
-  po: ["total", "committed", "expectedAt", "sourcingMode", "vendorId", "requestId"],
-  receipt: ["deliveryReference", "receivedAt", "note", "orderId"],
-  invoice: ["number", "total", "invoiceDate", "vendorId", "orderId"],
-  vendor: ["code", "name", "email", "phone", "address", "taxIdentifier", "active"],
-  user: ["name", "email", "role", "active", "departmentId"],
-  budget: ["allocated", "committed", "verified", "available", "costCenterId"],
-};
-function human(key: string) {
-  return key.replace(/([A-Z])/g, " $1").replace(/^./, (v) => v.toUpperCase());
-}
 export function DocumentDetailPage({ kind, id }: { kind: Kind; id: string }) {
-  const { data: user } = useAuth();
-  const client = useQueryClient();
-  const [busy, setBusy] = useState("");
-  const [error, setError] = useState("");
-  const [reason, setReason] = useState("");
-  const path = `${urls[kind]}/${id}`;
   const {
+    user,
+    client,
+    busy,
+    setBusy,
+    error,
+    setError,
+    reason,
+    setReason,
+    path,
     data,
     refetch,
     isPending,
-    error: loadError,
-  } = useQuery({ queryKey: ["document", kind, id], queryFn: () => apiGet<EntityRow>(path) });
-  const status = String(data?.status || "");
-  const actions: {
-    label: string;
-    command: string;
-    roles: string[];
-    reason?: boolean;
-    to?: string;
-  }[] = [];
-  if (kind === "request") {
-    if (status === "DRAFT" && data?.requesterId === user?.id)
-      actions.push({ label: "Submit request", command: "submit", roles: ["ALL"] });
-    if (
-      status === "SUBMITTED" &&
-      ["ADMIN", "DEPARTMENT_MANAGER"].includes(user?.role || "") &&
-      data?.requesterId !== user?.id
-    ) {
-      actions.push(
-        { label: "Approve", command: "approve", roles: ["ALL"] },
-        { label: "Reject", command: "reject", roles: ["ALL"], reason: true },
-      );
-    }
-  }
-  if (kind === "rfq" && ["PROCUREMENT_OFFICER", "ADMIN"].includes(user?.role || "")) {
-    if (status === "DRAFT") actions.push({ label: "Open RFQ", command: "open", roles: ["ALL"] });
-    if (status === "OPEN")
-      actions.push({ label: "Start evaluation", command: "evaluate", roles: ["ALL"] });
-    if (status === "EVALUATION")
-      actions.push({
-        label: "Compare & award",
-        command: "compare",
-        to: `/app/rfqs/${id}/compare`,
-        roles: ["ALL"],
-      });
-  }
-  if (kind === "po" && ["PROCUREMENT_OFFICER", "ADMIN"].includes(user?.role || "")) {
-    if (status === "DRAFT") actions.push({ label: "Issue PO", command: "issue", roles: ["ALL"] });
-    if (["ISSUED", "PARTIALLY_RECEIVED", "FULLY_RECEIVED"].includes(status))
-      actions.push({ label: "Close PO", command: "close", roles: ["ALL"], reason: true });
-    if (["DRAFT", "ISSUED"].includes(status))
-      actions.push({ label: "Cancel PO", command: "cancel", roles: ["ALL"], reason: true });
-  }
-  if (kind === "receipt" && ["RECEIVING_OFFICER", "ADMIN"].includes(user?.role || "")) {
-    if (status === "DRAFT")
-      actions.push({ label: "Post receipt", command: "post", roles: ["ALL"] });
-    if (["DRAFT", "POSTED"].includes(status))
-      actions.push({ label: "Void receipt", command: "void", roles: ["ALL"], reason: true });
-  }
-  if (kind === "invoice" && ["FINANCE_OFFICER", "ADMIN"].includes(user?.role || "")) {
-    if (["DRAFT", "DISCREPANCY"].includes(status))
-      actions.push({
-        label: "Submit invoice",
-        command: status === "DRAFT" ? "submit" : "resubmit",
-        roles: ["ALL"],
-      });
-    if (["SUBMITTED", "MATCHED", "DISCREPANCY"].includes(status))
-      actions.push({
-        label: "Three-way matching",
-        command: "matching",
-        to: `/app/invoices/${id}/matching`,
-        roles: ["ALL"],
-      });
-    if (["DRAFT", "SUBMITTED", "MATCHED", "DISCREPANCY"].includes(status))
-      actions.push({ label: "Cancel invoice", command: "cancel", roles: ["ALL"], reason: true });
-  }
-  async function act(action: string, needsReason: boolean) {
-    if (needsReason && reason.trim().length < 5) {
-      setError("Provide a reason with at least five characters");
-      return;
-    }
-    if (
-      !confirm(
-        `Confirm ${action.replaceAll("-", " ")} for ${String(data?.reference || data?.number || id)}?`,
-      )
-    )
-      return;
-    setBusy(action);
-    setError("");
-    try {
-      await apiPost(`${path}/${action}`, needsReason ? { reason } : {}, path);
-      await client.invalidateQueries({ queryKey: ["document", kind, id] });
-      await client.invalidateQueries({ queryKey: ["list"] });
-      await client.invalidateQueries({ queryKey: ["dashboard"] });
-      await refetch();
-      setReason("");
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Operation failed");
-    } finally {
-      setBusy("");
-    }
-  }
-  if (isPending)
+    loadError,
+    status,
+    actions,
+    act,
+  } = useDocumentDetail({ kind, id });
+  if (isPending) {
     return (
       <main className="page">
         <Loading />
       </main>
     );
-  if (loadError)
+  }
+  if (loadError) {
     return (
       <main className="page">
         <ErrorNotice message={loadError.message} />
       </main>
     );
+  }
   const lines = (Array.isArray(data?.lines) ? data.lines : []) as {
     id: string;
     description?: string;

@@ -1,37 +1,22 @@
-import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+
 import { Download, BarChart3 } from "lucide-react";
-import { apiGet } from "../../../shared/api/http-client";
+
 import { PageHeader } from "../../../shared/ui/PageHeader";
 import { ErrorNotice, Loading, Empty } from "../../../shared/ui/Feedback";
 import { cellText } from "../../../shared/formatters/value";
 
 const kinds = ["purchase-requests", "procurement", "receiving", "invoices", "vendors", "budgets"];
+import { useReports } from "../hooks/useReports";
+
 export function ReportsPage() {
-  const [kind, setKind] = useState("procurement");
-  const report = useQuery({
-    queryKey: ["report", kind],
-    queryFn: () => apiGet<Record<string, unknown>[]>(`/reports/${kind}`),
-  });
-  const rows = report.data || [];
-  const cols = rows.length
-    ? Object.keys(rows[0]).filter((k) => !k.endsWith("Id") && !k.includes("Hash"))
-    : [];
-  async function download() {
-    try {
-      const res = await fetch(`/api/v1/reports/${kind}/export`, { credentials: "include" });
-      if (!res.ok) throw new Error("Export failed");
-      const blob = await res.blob();
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `pvms-${kind}.csv`;
-      a.click();
-      URL.revokeObjectURL(url);
-    } catch (e) {
-      alert(e instanceof Error ? e.message : "Unable to export");
-    }
-  }
+  const {
+    kind,
+    setKind,
+    report,
+    rows,
+    cols,
+    download,
+  } = useReports();
   return (
     <main className="page">
       <PageHeader

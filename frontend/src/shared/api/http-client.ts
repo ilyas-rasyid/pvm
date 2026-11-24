@@ -23,12 +23,18 @@ async function send<T>(
 ): Promise<T> {
   const headers: Record<string, string> = { Accept: "application/json" };
   if (method !== "GET") {
-    if (!csrf) await loadCsrf();
+    if (!csrf) {
+      await loadCsrf();
+    }
     headers["X-CSRF-Token"] = csrf || "";
     headers["Idempotency-Key"] = crypto.randomUUID();
-    if (body !== undefined) headers["Content-Type"] = "application/json";
+    if (body !== undefined) {
+      headers["Content-Type"] = "application/json";
+    }
     const target = conditionPath || path;
-    if (etags.has(target)) headers["If-Match"] = etags.get(target)!;
+    if (etags.has(target)) {
+      headers["If-Match"] = etags.get(target)!;
+    }
   }
   const res = await fetch(`${base}${path}`, {
     method,
@@ -51,7 +57,9 @@ async function send<T>(
       requestId: p.requestId,
     });
   }
-  if (res.headers.get("etag")) etags.set(path, res.headers.get("etag")!);
+  if (res.headers.get("etag")) {
+    etags.set(path, res.headers.get("etag")!);
+  }
   const payload = (await res.json()) as {
     data: T;
   };
@@ -67,7 +75,9 @@ export const apiDelete = <T>(path: string, conditionPath?: string) =>
 
 export async function loadCsrf() {
   const res = await fetch(`${base}/auth/csrf`, { credentials: "include", cache: "no-store" });
-  if (!res.ok) throw new Error("Could not establish secure form context");
+  if (!res.ok) {
+    throw new Error("Could not establish secure form context");
+  }
   const body = (await res.json()) as {
     data: {
       csrfToken: string;

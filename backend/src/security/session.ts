@@ -1,4 +1,5 @@
 import { createHash, randomBytes, timingSafeEqual } from "node:crypto";
+
 import { db } from "../infrastructure/database/prisma-client";
 import { env } from "../config/env";
 import { AppError, assert } from "../shared/errors/app-error";
@@ -64,7 +65,9 @@ export function checkPreAuth(request: Request) {
 
 export async function currentSession(request: Request) {
   const token = sessionToken(request);
-  if (!token) return null;
+  if (!token) {
+    return null;
+  }
   const session = await db.authSession.findUnique({
     where: { tokenHash: sha(token) },
     include: { user: true },
@@ -75,8 +78,9 @@ export async function currentSession(request: Request) {
     !session.user.active ||
     session.idleExpiresAt <= new Date() ||
     session.absoluteExpiresAt <= new Date()
-  )
+  ) {
     return null;
+  }
   if (Date.now() - session.lastSeenAt.getTime() > 5 * 60000) {
     const nextIdle = new Date(
       Math.min(Date.now() + 30 * 60000, session.absoluteExpiresAt.getTime()),
@@ -91,7 +95,9 @@ export async function currentSession(request: Request) {
 
 export async function actorFrom(request: Request): Promise<Actor> {
   const session = await currentSession(request);
-  if (!session) throw new AppError("AUTH_REQUIRED", "Please log in", 401);
+  if (!session) {
+    throw new AppError("AUTH_REQUIRED", "Please log in", 401);
+  }
   return {
     id: session.user.id,
     name: session.user.name,
@@ -113,7 +119,9 @@ export function checkOrigin(request: Request) {
 export async function checkCsrf(request: Request) {
   checkOrigin(request);
   const session = await currentSession(request);
-  if (!session) throw new AppError("AUTH_REQUIRED", "Please log in", 401);
+  if (!session) {
+    throw new AppError("AUTH_REQUIRED", "Please log in", 401);
+  }
   const value = request.headers.get("x-csrf-token") || "";
   const incoming = Buffer.from(sha(value));
   const expected = Buffer.from(session.csrfTokenHash);
@@ -125,10 +133,13 @@ export async function checkCsrf(request: Request) {
   );
 }
 export async function secureActor(ctx: RouteContext, roles?: string[], unsafe = true) {
-  if (unsafe) await checkCsrf(ctx.request);
+  if (unsafe) {
+    await checkCsrf(ctx.request);
+  }
   const actor = await actorFrom(ctx.request);
-  if (roles && !roles.includes(actor.role))
+  if (roles && !roles.includes(actor.role)) {
     throw new AppError("ACCESS_DENIED", "Not permitted", 403);
+  }
   return actor;
 }
 

@@ -1,4 +1,5 @@
 import "dotenv/config";
+
 import { db } from "../infrastructure/database/prisma-client";
 const pause = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 while (true) {
@@ -10,7 +11,9 @@ while (true) {
         }[]
       >`SELECT id FROM "OutboxEvent" WHERE status='PENDING' AND "availableAt"<=NOW() ORDER BY "createdAt" LIMIT 1 FOR UPDATE SKIP LOCKED`;
       const id = events[0]?.id;
-      if (!id) return null;
+      if (!id) {
+        return null;
+      }
       return tx.outboxEvent.update({
         where: { id },
         data: { status: "PROCESSING", attempt: { increment: 1 } },
@@ -28,7 +31,7 @@ while (true) {
           type?: string;
           id?: string;
         };
-        if (payload.recipientId)
+        if (payload.recipientId) {
           await db.notification.upsert({
             where: { id: event.id },
             create: {
@@ -41,6 +44,7 @@ while (true) {
             },
             update: {},
           });
+        }
       }
       await db.outboxEvent.update({
         where: { id: event.id },

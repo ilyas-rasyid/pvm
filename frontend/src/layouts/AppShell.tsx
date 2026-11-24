@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "@tanstack/react-router";
 import { Bell, Menu, LogOut, Sun, Moon, ChevronDown } from "lucide-react";
+
 import { nav } from "../app/config/navigation";
 import { logout } from "../shared/api/http-client";
 import { queryClient } from "../app/query/query-client";
@@ -19,9 +20,13 @@ export function AppShell({ user, children }: { user: User; children: React.React
   const [showExitConfirm, setShowExitConfirm] = useState(false);
   const [exiting, setExiting] = useState(false);
   const [dark, setDark] = useState(() => {
-    if (typeof window === "undefined") return false;
+    if (typeof window === "undefined") {
+      return false;
+    }
     const saved = localStorage.getItem("pvms-theme");
-    if (saved) return saved === "dark";
+    if (saved) {
+      return saved === "dark";
+    }
     return (
       document.documentElement.dataset.theme === "dark" ||
       document.documentElement.classList.contains("dark") ||
@@ -74,7 +79,9 @@ export function AppShell({ user, children }: { user: User; children: React.React
   }, [dark]);
 
   useEffect(() => {
-    if (!showExitConfirm) return;
+    if (!showExitConfirm) {
+      return;
+    }
     function onKeyDown(e: KeyboardEvent) {
       if (e.key === "Escape" && !exiting) {
         setShowExitConfirm(false);

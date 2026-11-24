@@ -16,5 +16,7 @@ export function assert(
   message: string,
   status = 409,
 ): asserts condition {
-  if (!condition) throw new AppError(code, message, status);
+  if (!condition) {
+    throw new AppError(code, message, status);
+  }
 }
