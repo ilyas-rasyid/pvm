@@ -147,7 +147,7 @@ export function AppShell({ user, children }: { user: User; children: React.React
         <div className="sidebar-top">
           <span className="brand-mark">P</span>
           <span>
-            pvms<span className="muted">.</span>
+            pvms<span className="muted"></span>
           </span>
         </div>
         <div className="nav-scroll">
