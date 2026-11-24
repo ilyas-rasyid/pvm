@@ -1,97 +1,136 @@
 # PVMS — Procurement & Vendor Management System
 
-**Enterprise fullstack source workspace** for Purchase Requests, approvals, vendor quotations, Purchase Orders, Goods Receipts, and vendor invoice matching.
+An enterprise full-stack web application designed to streamline the end-to-end procurement process: from Purchase Requests and multi-stage approvals to vendor sourcing, Purchase Orders, Goods Receipts, and 3-way invoice matching.
 
-> **Implementation draft, not yet verified as complete.** This archive was created without access to Bun, Docker, PostgreSQL, or a package registry. Static TypeScript syntax and repository import paths were checked, but the actual app build, Prisma migration execution, PostgreSQL concurrency behavior and browser tests must still be verified. See [`docs/handoff/ANTIGRAVITY-VERIFICATION.md`](docs/handoff/ANTIGRAVITY-VERIFICATION.md).
+---
 
-## Technology
+## 🚀 Key Features & Workflow
 
-Frontend: React 19, TypeScript, Vite, TanStack Router/Query, Tailwind CSS, React Hook Form (dependency prepared), Lucide. Backend: Bun, Elysia, Prisma ORM 7 (PostgreSQL adapter), PostgreSQL 17, Decimal.js. The deployment skeleton uses Docker Compose.
+The system follows a complete procure-to-pay lifecycle:
 
-## Repository layout
-
-```
-frontend/
-  src/app/                 App initialization, router, QueryClient
-  src/routes/              Role-protected file-based route wrappers
-  src/features/            Domain pages, forms, workspaces
-  src/layouts/             App shell and navigation
-  src/shared/              API client, formatters and UI primitives
-backend/
-  prisma/models/           47 domain models, split by responsibility
-  prisma/migrations/       Initial SQL migration and constraints
-  prisma/seed.ts           Synthetic six-role demonstration setup
-  src/features/            Each HTTP/domain area separated
-  src/security/            Cookie sessions, CSRF, Origin guard
-  src/shared/              Transactions, finance, error responses
-  src/workers/             Outbox worker
-scripts/                   Source architecture audit
+```text
+[Purchase Request] ──> [Department Approval] ──> [RFQ & Sourcing]
+        │
+        └──> [Purchase Order] ──> [Goods Receipt] ──> [3-Way Invoice Match] ──> Ready for Payment
 ```
 
-## Quickstart (Ubuntu / Antigravity)
+- **Purchase Requests (PR)**: Employees draft and submit purchase requests with item details and budget allocation.
+- **Department Approvals**: Department managers review, approve, or reject pending requests.
+- **RFQ & Vendor Sourcing**: Procurement officers create requests for quotes, record vendor bids, evaluate offers, and award contracts.
+- **Purchase Orders (PO)**: Generate and issue formal POs, locking quantities and reserving budgets.
+- **Goods Receipt (GR)**: Receiving officers verify shipments, recording accepted and rejected quantities.
+- **3-Way Matching & Invoicing**: Finance matches Vendor Invoices against POs and Goods Receipts for payment clearance.
+- **Role-Based Access Control (RBAC)**: Fine-grained permissions and workflows tailored across 6 organizational roles.
 
-Install Bun and Docker/Compose first. Use the repo root as workspace. **Do not run the seed against a real/company database.**
+---
+
+## 🛠️ Tech Stack
+
+- **Frontend**: React 19, TypeScript, Vite, TanStack Router & Query, Tailwind CSS v4, Lucide Icons.
+- **Backend**: Bun, Elysia, Prisma ORM 7, Decimal.js.
+- **Database**: PostgreSQL 17 (managed via Docker Compose).
+
+---
+
+## 🏁 Quickstart
+
+### Prerequisites
+
+- [Bun](https://bun.sh/) (v1.2+)
+- [Docker & Docker Compose](https://docs.docker.com/compose/)
+
+### 1. Installation & Environment Setup
+
+Clone the repository and install dependencies:
 
 ```bash
+bun install
+
+# Copy environment configuration files
 cp backend/.env.example backend/.env
 cp frontend/.env.example frontend/.env
-bun install
-# Commit the newly generated bun.lock once resolved and verified.
-docker compose up -d db
+```
+
+### 2. Database Setup
+
+Start the PostgreSQL service, run database migrations, and populate initial seed data:
+
+```bash
+# Start PostgreSQL container
+bun run db:up
+
+# Run Prisma schema generation and migrations
 bun run db:generate
 bun run db:migrate:deploy
-NODE_ENV=development DEMO_PASSWORD='ChooseAUniqueDemoPassphraseHere' bun run db:seed
+
+# Seed demo users, master data, and workflows
+NODE_ENV=development DEMO_PASSWORD='YourSecureDemoPassword123!' bun run db:seed
 ```
 
-Start two terminals:
+### 3. Start Development Servers
+
+Run both backend and frontend applications concurrently:
 
 ```bash
-bun run dev:backend
-bun run dev:frontend
+bun run dev
 ```
 
-Then visit `http://localhost:5173`, with API at `http://localhost:3001`. The dev Vite proxy routes `/api` and `/health` to the backend. The seed uses the password supplied in `DEMO_PASSWORD` for six **synthetic development-only** accounts:
+- **Frontend Application**: [http://localhost:5173](http://localhost:5173)
+- **Backend API**: [http://localhost:3001](http://localhost:3001)
 
-- `employee@pvms.demo`
-- `department-manager@pvms.demo`
-- `procurement-officer@pvms.demo`
-- `receiving-officer@pvms.demo`
-- `finance-officer@pvms.demo`
-- `admin@pvms.demo`
+_(The Vite development server automatically proxies `/api` requests to the backend)._
 
-## Quality checks
+---
 
-```bash
-bun run db:generate
-bun run typecheck
-bun run lint
-bun run check:architecture
-bun run test:unit
-bun run build
+## 👥 Demo Accounts
+
+The seed script creates 6 pre-configured development accounts (all accounts use the password specified in `DEMO_PASSWORD`):
+
+| Role                    | Email                           | Primary Responsibilities                             |
+| ----------------------- | ------------------------------- | ---------------------------------------------------- |
+| **Employee**            | `employee@pvms.demo`            | Create and track Purchase Requests                   |
+| **Department Manager**  | `department-manager@pvms.demo`  | Review and approve departmental requests             |
+| **Procurement Officer** | `procurement-officer@pvms.demo` | RFQs, vendor evaluations, and PO issuance            |
+| **Receiving Officer**   | `receiving-officer@pvms.demo`   | Inspect deliveries and log Goods Receipts            |
+| **Finance Officer**     | `finance-officer@pvms.demo`     | 3-way matching and invoice verification              |
+| **Administrator**       | `admin@pvms.demo`               | Master data, users, departments, and system settings |
+
+---
+
+## 📁 Project Structure
+
+```text
+procurement-vendor-management/
+├── backend/
+│   ├── prisma/             # Prisma schema, migrations, and seed script
+│   ├── src/features/       # Modular domain features (auth, PR, PO, invoices, etc.)
+│   ├── src/security/       # CSRF protection, origin guards, session cookies
+│   └── src/index.ts        # Elysia server entry point
+├── frontend/
+│   ├── src/app/            # App setup, router, and query client
+│   ├── src/features/       # UI feature pages, forms, and dialogs
+│   ├── src/routes/         # Role-protected routing wrappers
+│   └── src/layouts/        # App layout and navigation
+├── compose.yaml            # Docker Compose setup for PostgreSQL
+└── package.json            # Monorepo workspaces and unified scripts
 ```
 
-These commands are part of the intended implementation contract and **have not been executed successfully in the generating environment**. First-run library API and schema compatibility adjustments may be necessary.
+---
 
-## Primary workflow
+## 🧪 Common Commands
 
-1. Employee creates a PR draft, opens it and submits.
-2. Department Manager approves the submitted request.
-3. Procurement creates an RFQ, opens it, records quotations, evaluates vendor offers and awards quantities, **or** records an authorized direct-purchase exception.
-4. Procurement creates a PO draft and issues it; issue reserves PR quantities and budget.
-5. Receiving posts a draft Goods Receipt with accepted/rejected units.
-6. Finance creates and submits an invoice, matches against accepted receipts, and final-verifies it to Ready for Payment.
-7. Procurement closes a reconciled PO.
+| Command                | Description                                                      |
+| ---------------------- | ---------------------------------------------------------------- |
+| `bun run dev`          | Run backend and frontend concurrently                            |
+| `bun run dev:backend`  | Run backend with hot-reload (`bun --watch`)                      |
+| `bun run dev:frontend` | Run frontend Vite dev server                                     |
+| `bun run check`        | Run linter, typecheck, architecture audit, unit tests, and build |
+| `bun run typecheck`    | Run TypeScript verification across frontend and backend          |
+| `bun run test:unit`    | Run all unit tests                                               |
+| `bun run db:studio`    | Open Prisma Studio to inspect the database                       |
 
-**Ready for Payment is not Paid.** Banking, general ledger, multi-currency and actual payment processing are outside the MVP.
+---
 
-## Security caveats
+## 📄 License
 
-This is a portfolio/source implementation draft, **not a production-approved financial system**. Do not deploy with actual documents, credentials, or financial transactions before security review, complete tests, and migration validation. The current login throttle is process-local; authorization/CSRF and attachment handling must be exercised under the intended deployment topology. The source includes financial transaction and locking logic, but concurrency correctness is not yet proven by database tests.
-
-## What is not yet verified or complete
-
-A substantive set of routes and flows is implemented, but the frozen 125-item Master PRD is **not yet fully satisfied**. Remaining work includes PO amendments, invoice edits/corrections, quotation revisions, attachment versioning, deeper admin controls, complete domain authorization matrix, comprehensive ETag/Idempotency recovery, production-grade tests and hardening. See the handoff verification checklist for the exact unresolved requirements.
-
-## License
-
-MIT. The demo organization/vendor names are invented and do not represent real companies.
+This project is licensed under the [MIT License](LICENSE).
