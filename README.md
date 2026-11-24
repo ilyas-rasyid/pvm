@@ -4,7 +4,7 @@ An enterprise full-stack web application designed to streamline the end-to-end p
 
 ---
 
-## 🚀 Key Features & Workflow
+## Key Features & Workflow
 
 The system follows a complete procure-to-pay lifecycle:
 
@@ -24,7 +24,7 @@ The system follows a complete procure-to-pay lifecycle:
 
 ---
 
-## 🛠️ Tech Stack
+## Tech Stack
 
 - **Frontend**: React 19, TypeScript, Vite, TanStack Router & Query, Tailwind CSS v4, Lucide Icons.
 - **Backend**: Bun, Elysia, Prisma ORM 7, Decimal.js.
@@ -32,7 +32,7 @@ The system follows a complete procure-to-pay lifecycle:
 
 ---
 
-## 🏁 Quickstart
+## Quickstart
 
 ### Prerequisites
 
@@ -82,7 +82,7 @@ _(The Vite development server automatically proxies `/api` requests to the backe
 
 ---
 
-## 👥 Demo Accounts
+## Demo Accounts
 
 The seed script creates 6 pre-configured development accounts (all accounts use the password specified in `DEMO_PASSWORD`):
 
@@ -97,7 +97,7 @@ The seed script creates 6 pre-configured development accounts (all accounts use 
 
 ---
 
-## 📁 Project Structure
+## Project Structure
 
 ```text
 procurement-vendor-management/
@@ -117,7 +117,7 @@ procurement-vendor-management/
 
 ---
 
-## 🧪 Common Commands
+## Common Commands
 
 | Command                | Description                                                      |
 | ---------------------- | ---------------------------------------------------------------- |
@@ -131,6 +131,3 @@ procurement-vendor-management/
 
 ---
 
-## 📄 License
-
-This project is licensed under the [MIT License](LICENSE).
